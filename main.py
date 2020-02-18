@@ -1,43 +1,18 @@
+from parsing import parser
 import folium
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
 from geopy.distance import geodesic
 from folium.features import DivIcon
 import time
-
 locator = Nominatim(user_agent="Films nearby")
 
 
-def parser(location, ipt_year, ipt_country):
-    """str -> dict
-    Returns a dict with location as a key and title as a value
-    """
-    res = {}
-    with open(location, 'r', encoding="utf-8", errors='ignore') as f:
-        for line in f:
-            line = line.strip().split('\t')
-
-            for l in range(len(line[0])):
-                # Checking if the year is valid
-                if line[0][l] == '(' and line[0][l + 1: l + 5].isdigit():
-                    year = int(line[0][l + 1: l + 5])
-
-                    if year != ipt_year:
-                        break
-                    title = line[0][:l]
-                    location = line[-2] if line[-1][-1] == ')' else line[-1]
-                    if location.endswith(ipt_country):
-                        res[location] = res.get(location, []) + [title]
-                    break
-        lst = [[key] + res[key] for key in res]
-        lst.sort(key=lambda x: len(x), reverse=True)
-        return lst
-
-
 def get_input():
-    """->(int, float, float)
-    Inputs year, latitude and longitude from uset
     """
+    Inputs year, latitude and longitude from the user
+    :return: ((inr, str, str
+    """
+
     while True:
         try:
             year = int(input("Please enter a year you"
@@ -51,16 +26,32 @@ def get_input():
 
 
 def get_country(lat, lon):
+    """
+    Returns a country of these coordnates
+    :param lat: float
+    :param lon: float
+    :return: str
+    >>> get_country(33.900002, -119.199997)
+    "USA
+    """
     location = locator.reverse([lat, lon], language="en-us")
     country = location.raw['address']['country']
-    if country == "United States of America" or "United States":
+    if country == "United States of America" or country == "United States":
         return "USA"
     if country == "United Kingdom":
         return "UK"
     return country
 
-
 def build_and_display_html(top_10, lat, lon):
+    """
+    Builds layers with nearest movies distances
+    and population of countries, then merges them
+    and creates 'map.html file
+    :param top_10: list
+    :param lat: float
+    :param lon: float
+    :return: None
+    """
     m = folium.Map(location=[lat, lon], zoom_start=7)  # Map object
     film_group = folium.FeatureGroup(name="Markers of film")
     lines_group = folium.FeatureGroup(name="Polylines")
@@ -99,6 +90,7 @@ def build_and_display_html(top_10, lat, lon):
 
         except AttributeError:
             continue
+
     # Adding third layer:
     fg_pp = folium.FeatureGroup(name="Population")
     fg_pp.add_child(folium.GeoJson(data=open('files/world.json', 'r',
@@ -117,13 +109,21 @@ def build_and_display_html(top_10, lat, lon):
 
 
 def find_locations(lat, lon, year):
+    """
+    Returns a list with 10 or less locations where films were casted
+    in particular year, that are neareeest to given coordinates
+    :param lat: float
+    :param lon: float
+    :param year: int
+    :return: list
+    """
     country = get_country(lat, lon)
     coordinates = parser("files/locations.list", year, country)
     print(coordinates, country, len(coordinates))
     distances = []
     for i in range(len(coordinates)):
         try:
-            if 35 <= len(distances) or i >= 100:
+            if 400 <= len(distances) or i >= 700:
                 break
             location = locator.geocode(coordinates[i][0])
             film_lat, film_lon = (location.latitude, location.longitude)
@@ -138,5 +138,10 @@ def find_locations(lat, lon, year):
     return distances[:10]
 
 
-distances = find_locations(33.900002, -119.199997, 2015)
-build_and_display_html(distances, 33.900002, -119.199997)
+if __name__ == "__main__":
+    year, lat, lon = get_input()
+    print("Map is generating...")
+    print("Please wait...")
+    distances = find_locations(lat, lon, 2015)
+    build_and_display_html(distances, lat, lon,)
+    print("Finished. Please have look at the map map.html")
