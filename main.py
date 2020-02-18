@@ -42,6 +42,7 @@ def get_country(lat, lon):
         return "UK"
     return country
 
+
 def build_and_display_html(top_10, lat, lon):
     """
     Builds layers with nearest movies distances
@@ -57,7 +58,8 @@ def build_and_display_html(top_10, lat, lon):
     lines_group = folium.FeatureGroup(name="Polylines")
     film_group.add_child(folium.Marker(location=[lat, lon],
                                        popup="Your location",
-                                       icon=folium.Icon(icon='cloud', color='red')))
+                                       icon=folium.Icon(icon='cloud',
+                                       color='red')))
     for i in range(len(top_10)):
         try:
             film_lat = top_10[i][-3]
@@ -70,7 +72,8 @@ def build_and_display_html(top_10, lat, lon):
                 icon=DivIcon(
                     icon_size=(150, 36),
                     icon_anchor=(0, 0),
-                    html='<b><div style="font-size: 10pt">{}</div></b>'.format(str(int(distance)) + " km"),
+                    html='<b><div style="font-size: 10pt">{}</div></b>'
+                    .format(str(int(distance)) + " km"),
                 ))
             lines = folium.PolyLine([(lat, lon), (film_lat, film_lon)],
                                     color="red", weight=2, tooltip="POOOPP",
@@ -86,7 +89,8 @@ def build_and_display_html(top_10, lat, lon):
 
             film_group.add_child(folium.Marker(location=[film_lat, film_lon],
                                                popup=films_list,
-                                               icon=folium.Icon(icon='cloud', icon_color='red')))
+                                               icon=folium.Icon(icon='cloud',
+                                               icon_color='red')))
 
         except AttributeError:
             continue
@@ -123,13 +127,12 @@ def find_locations(lat, lon, year):
     distances = []
     for i in range(len(coordinates)):
         try:
-            if 400 <= len(distances) or i >= 700:
+            if 150 <= len(distances) or i >= 200:
                 break
             location = locator.geocode(coordinates[i][0])
             film_lat, film_lon = (location.latitude, location.longitude)
-            distance = geodesic((film_lat, film_lon), (lat, lon)).km
-            print(coordinates[i][0], distance)
-            distances.append([coordinates[i][1:], film_lat, film_lon, distance])
+            dis = geodesic((film_lat, film_lon), (lat, lon)).km
+            distances.append([coordinates[i][1:], film_lat, film_lon, dis])
         except:
             continue
 
